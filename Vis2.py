@@ -21,6 +21,7 @@ age_unique = sorted(age_unique)
 
 MIN_AGE = 0
 MAX_AGE = 20
+k = 0
 
 covid_pos = df[df['SARS-Cov-2 exam result'] == 'positive']
 covid_pos_list = covid_pos['SARS-Cov-2 exam result'].count()
@@ -32,7 +33,13 @@ viruses = ['Respiratory Syncytial Virus', 'Influenza A', 'Influenza B', 'Parainf
 def calcDFICU():
     ageStart = range_slider.value[0]
     ageEnd = range_slider.value[1]
-
+    if(text_input2.value == 'positive'):
+        covid_pos = df[df['SARS-Cov-2 exam result'] == 'positive']
+    elif(text_input2.value == 'negative'):
+        covid_pos = df[df['SARS-Cov-2 exam result'] == 'negative']
+    elif(text_input2.value == 'all'):
+        covid_pos = df
+    print(text_input2.value)
     selected = covid_pos[(covid_pos['Patient age quantile'] >= ageStart) & 
         (covid_pos['Patient age quantile'] <= ageEnd)]
 
@@ -115,7 +122,7 @@ def countCases():
 #Making widgets
 range_slider = RangeSlider(start = MIN_AGE, end = MAX_AGE, value = (MIN_AGE, MAX_AGE), step = 1, title = "Age")
 text_input = TextInput(value=patient[0], title="Patient:")
-checkbox_group = CheckboxGroup(labels=["positive", "negative"], active=[0, 1])
+text_input2 = TextInput(value="positive", title="Covid-19 status: (Write in the box below 'all', 'positive' or 'negative')")
 multi_choice = MultiChoice(value=[], options=viruses)
 
 
@@ -219,14 +226,14 @@ def update():
 
     pass
 
-controls = [range_slider, text_input, multi_choice]
+controls = [range_slider, text_input, text_input2, multi_choice]
+
 for control in controls:
     control.on_change('value', lambda attr, old, new: update())
     
 
-controls.append(checkbox_group)
 
-layout = column(range_slider, text_input, pre, checkbox_group, pre2, multi_choice, pre3, file_input)
+layout = column(range_slider, text_input, text_input2, pre2, multi_choice, pre3, file_input)
 grid = gridplot([[layout, Tabs(tabs=[tab1, tab2])]])
 
 update()  # initial load of the data
