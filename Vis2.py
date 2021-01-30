@@ -30,8 +30,8 @@ viruses = ['Respiratory Syncytial Virus', 'Influenza A', 'Influenza B', 'Parainf
 
 
 def calcDFICU():
-    ageStart = range_slider.start
-    ageEnd = range_slider.end
+    ageStart = range_slider.value[0]
+    ageEnd = range_slider.value[1]
 
     selected = covid_pos[(covid_pos['Patient age quantile'] >= ageStart) & 
         (covid_pos['Patient age quantile'] <= ageEnd)]
@@ -67,12 +67,12 @@ def getDf():
 
 #Algorithm to count cases
 def countCases():
-    ageStart = range_slider.start
-    ageEnd = range_slider.end
+    ageStart = range_slider.value[0]
+    ageEnd = range_slider.value[1]
 
     selected = df[(df['Patient age quantile'] >= ageStart) & 
         (df['Patient age quantile'] <= ageEnd)]
-    print(range_slider.value)
+    
     k=0
     count = []
     regular_count = []
@@ -117,7 +117,7 @@ range_slider = RangeSlider(start = MIN_AGE, end = MAX_AGE, value = (MIN_AGE, MAX
 text_input = TextInput(value=patient[0], title="Patient:")
 checkbox_group = CheckboxGroup(labels=["positive", "negative"], active=[0, 1])
 multi_choice = MultiChoice(value=[], options=viruses)
-button = Button(label="Update", button_type="success")
+
 
 pre = PreText(text="""Covid-19 status:""", width=500, height=10)
 pre2 = PreText(text="""Choose other viruses:""", width=500, height=10)
@@ -158,7 +158,9 @@ p1 = figure(plot_width=800,
     y_axis_label = "Age of the patient",
     tools = TOOLS,
     tooltips = hover)
+
 color = 'blue'
+
 p1.vbar(
     x = 'age_unique',
     top = 'count',
@@ -217,10 +219,6 @@ def update():
 
     pass
 
-
-button.on_click(update)
-
-
 controls = [range_slider, text_input, multi_choice]
 for control in controls:
     control.on_change('value', lambda attr, old, new: update())
@@ -228,7 +226,7 @@ for control in controls:
 
 controls.append(checkbox_group)
 
-layout = column(range_slider, text_input, pre, checkbox_group, pre2, multi_choice, pre3, file_input, button)
+layout = column(range_slider, text_input, pre, checkbox_group, pre2, multi_choice, pre3, file_input)
 grid = gridplot([[layout, Tabs(tabs=[tab1, tab2])]])
 
 update()  # initial load of the data
@@ -237,3 +235,4 @@ curdoc().add_root(grid)
 curdoc().title = "COVID-19 Data Visualizations"
 
 #show(grid)
+#bokeh serve --show Vis2.py
