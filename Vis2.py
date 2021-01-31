@@ -18,9 +18,10 @@ age = df['Patient age quantile'].to_list()
 covid = df['SARS-Cov-2 exam result'].to_list()
 age_unique = df['Patient age quantile'].unique()
 age_unique = sorted(age_unique)
+patient.sort()
 
 MIN_AGE = 0
-MAX_AGE = 20
+MAX_AGE = 19
 k = 0
 
 covid_pos = df[df['SARS-Cov-2 exam result'] == 'positive']
@@ -33,13 +34,13 @@ viruses = ['Respiratory Syncytial Virus', 'Influenza A', 'Influenza B', 'Parainf
 def calcDFICU():
     ageStart = range_slider.value[0]
     ageEnd = range_slider.value[1]
-    if(text_input2.value == 'positive'):
+    if(covid_input.value == 'positive'):
         covid_pos = df[df['SARS-Cov-2 exam result'] == 'positive']
-    elif(text_input2.value == 'negative'):
+    elif(covid_input.value == 'negative'):
         covid_pos = df[df['SARS-Cov-2 exam result'] == 'negative']
-    elif(text_input2.value == 'all'):
+    elif(covid_input.value == 'all'):
         covid_pos = df
-    print(text_input2.value)
+    print(covid_input.value)
     selected = covid_pos[(covid_pos['Patient age quantile'] >= ageStart) & 
         (covid_pos['Patient age quantile'] <= ageEnd)]
 
@@ -124,8 +125,8 @@ def countCases():
 
 #Making widgets
 range_slider = RangeSlider(start = MIN_AGE, end = MAX_AGE, value = (MIN_AGE, MAX_AGE), step = 1, title = "Age")
-text_input = TextInput(value=patient[0], title="Patient:")
-text_input2 = TextInput(value="positive", title="Covid-19 status: (Write in the box below 'all', 'positive' or 'negative')")
+patient_select = Select(title="Patient", value=patient[0], options=patient)
+covid_input = TextInput(value="positive", title="Covid-19 status: (Write in the box below 'all', 'positive' or 'negative')")
 multi_choice = MultiChoice(value=[], options=viruses)
 
 colors = ["blue", "red", "green", "black", "yellow", "orange", "purple"]
@@ -235,14 +236,14 @@ def update():
 
     pass
 
-controls = [range_slider, text_input, text_input2, multi_choice, select]
+controls = [range_slider, patient_select, covid_input, multi_choice, select]
 
 for control in controls:
     control.on_change('value', lambda attr, old, new: update())
     
 
 
-layout = column(range_slider, text_input, text_input2, pre2, multi_choice, pre3, file_input, select)
+layout = column(range_slider, patient_select, covid_input, pre2, multi_choice, pre3, file_input, select)
 grid = gridplot([[layout, Tabs(tabs=[tab1, tab2])]])
 
 update()  # initial load of the data
