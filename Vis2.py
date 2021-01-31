@@ -4,7 +4,7 @@ from numpy.lib.utils import source
 import pandas as pd
 from bokeh.io import curdoc, show
 from bokeh.layouts import column, gridplot
-from bokeh.models import ColumnDataSource, Slider, RangeSlider, CustomJS, TextInput, CheckboxGroup, PreText, Dropdown, MultiChoice, FileInput, Panel, Tabs, Button
+from bokeh.models import ColumnDataSource, Slider, RangeSlider, CustomJS, TextInput, CheckboxGroup, PreText, Dropdown, MultiChoice, FileInput, Panel, Tabs, Select
 from bokeh.plotting import figure
 from bokeh.transform import dodge
 from bokeh.models.tools import HoverTool
@@ -76,7 +76,10 @@ def getDf():
 def countCases():
     ageStart = range_slider.value[0]
     ageEnd = range_slider.value[1]
-
+    color = []
+    color.append(select.value)
+    for i in range(1,20):
+        color.append(None)
     selected = df[(df['Patient age quantile'] >= ageStart) & 
         (df['Patient age quantile'] <= ageEnd)]
     
@@ -116,7 +119,7 @@ def countCases():
         icu_count.append(k3)
 
     
-    return [count, age_unique, regular_count, sicu_count, icu_count]
+    return [count, age_unique, regular_count, sicu_count, icu_count, color]
 
 
 #Making widgets
@@ -124,6 +127,9 @@ range_slider = RangeSlider(start = MIN_AGE, end = MAX_AGE, value = (MIN_AGE, MAX
 text_input = TextInput(value=patient[0], title="Patient:")
 text_input2 = TextInput(value="positive", title="Covid-19 status: (Write in the box below 'all', 'positive' or 'negative')")
 multi_choice = MultiChoice(value=[], options=viruses)
+
+colors = ["blue", "red", "green", "black", "yellow", "orange", "purple"]
+select = Select(title="Choose the color of the plot:", value="blue", options=colors)
 
 
 pre = PreText(text="""Covid-19 status:""", width=500, height=10)
@@ -156,7 +162,7 @@ hover2 = """
 TOOLS = "pan,box_select,wheel_zoom,save,reset"
 
 #Plots
-p1Source = ColumnDataSource(data = dict(count = [], age_unique = [], regular_count = [], sicu_count = [], icu_count = []))
+p1Source = ColumnDataSource(data = dict(count = [], age_unique = [], regular_count = [], sicu_count = [], icu_count = [], color = []))
 
 p1 = figure(plot_width=800,
     plot_height=600,
@@ -166,14 +172,16 @@ p1 = figure(plot_width=800,
     tools = TOOLS,
     tooltips = hover)
 
-color = 'blue'
-
+color = []
+color.append('blue')
+for i in range(1,20):
+    color.append(None)
 p1.vbar(
     x = 'age_unique',
     top = 'count',
     bottom = 0,
     width = 0.5,
-    color = color,
+    color = 'color',
     fill_alpha = 0.5,
     source = p1Source
 )
@@ -219,21 +227,22 @@ def update():
         age_unique = p1SourceList[1],
         regular_count = p1SourceList[2],
         sicu_count = p1SourceList[3],
-        icu_count = p1SourceList[4]
+        icu_count = p1SourceList[4],
+        color = p1SourceList[5]
     )
 
     p2Source.data = calcDFICU()
 
     pass
 
-controls = [range_slider, text_input, text_input2, multi_choice]
+controls = [range_slider, text_input, text_input2, multi_choice, select]
 
 for control in controls:
     control.on_change('value', lambda attr, old, new: update())
     
 
 
-layout = column(range_slider, text_input, text_input2, pre2, multi_choice, pre3, file_input)
+layout = column(range_slider, text_input, text_input2, pre2, multi_choice, pre3, file_input, select)
 grid = gridplot([[layout, Tabs(tabs=[tab1, tab2])]])
 
 update()  # initial load of the data
