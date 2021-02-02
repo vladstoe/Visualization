@@ -1,4 +1,4 @@
-from bokeh.models.annotations import Legend
+from bokeh.models.annotations import Legend, Title
 import numpy as np
 from numpy.lib.utils import source
 import pandas as pd
@@ -34,13 +34,14 @@ viruses = ['Respiratory Syncytial Virus', 'Influenza A', 'Influenza B', 'Parainf
 def calcDFICU():
     ageStart = range_slider.value[0]
     ageEnd = range_slider.value[1]
-    if(covid_input.value == 'positive'):
+
+    if(patientType.value == 'Positive'):
         covid_pos = df[df['SARS-Cov-2 exam result'] == 'positive']
-    elif(covid_input.value == 'negative'):
+    elif(patientType.value == 'Negative'):
         covid_pos = df[df['SARS-Cov-2 exam result'] == 'negative']
-    elif(covid_input.value == 'all'):
+    elif(patientType.value == 'All'):
         covid_pos = df
-    print(covid_input.value)
+
     selected = covid_pos[(covid_pos['Patient age quantile'] >= ageStart) & 
         (covid_pos['Patient age quantile'] <= ageEnd)]
 
@@ -77,18 +78,28 @@ def getDf():
 def countCases():
     ageStart = range_slider.value[0]
     ageEnd = range_slider.value[1]
+
+    if(patientType.value == 'Positive'):
+        temp = df[df['SARS-Cov-2 exam result'] == 'positive']
+    elif(patientType.value == 'Negative'):
+        temp = df[df['SARS-Cov-2 exam result'] == 'negative']
+    else:
+        temp = df
+
     color = []
-    color.append(select.value)
+    color.append(selectColor.value)
     for i in range(1,20):
         color.append(None)
-    selected = df[(df['Patient age quantile'] >= ageStart) & 
-        (df['Patient age quantile'] <= ageEnd)]
+
+    selected = temp[(temp['Patient age quantile'] >= ageStart) & 
+        (temp['Patient age quantile'] <= ageEnd)]
     
     k=0
     count = []
     regular_count = []
     sicu_count = []
     icu_count = []
+
     for l in range(0,20):
         x = selected[selected['Patient age quantile'] == l].copy()
         covid = x['SARS-Cov-2 exam result'].to_list()
@@ -99,10 +110,8 @@ def countCases():
         k1 = 0
         k2 = 0
         k3 = 0
-        for i in covid:
-            if i == 'positive':
-                k = k + 1
-        count.append(k)
+
+        count.append(x.shape[0])
 
         for i in regular:
             if i == int('1'):
@@ -125,12 +134,11 @@ def countCases():
 
 #Making widgets
 range_slider = RangeSlider(start = MIN_AGE, end = MAX_AGE, value = (MIN_AGE, MAX_AGE), step = 1, title = "Age")
-patient_select = Select(title="Patient", value=patient[0], options=patient)
-covid_input = TextInput(value="positive", title="Covid-19 status: (Write in the box below 'all', 'positive' or 'negative')")
+patientType = Select(value = "Positive", options = ["All", "Positive", "Negative"])
 multi_choice = MultiChoice(value=[], options=viruses)
 
 colors = ["blue", "red", "green", "black", "yellow", "orange", "purple"]
-select = Select(title="Choose the color of the plot:", value="blue", options=colors)
+selectColor = Select(title="Choose the color of the plot:", value="blue", options=colors)
 
 
 pre = PreText(text="""Covid-19 status:""", width=500, height=10)
@@ -142,23 +150,23 @@ file_input = FileInput()
 
 # Hover tool for Abstract/Explore (V)
 hover = """
-<div>
+    <div>
 
-<div><strong>Number of infected people: </strong>@count</div>
-<div><strong>Number of infected people admitted to Regular Ward: </strong>@regular_count</div>
-<div><strong>Number of infected people admitted to Semi-ICU: </strong>@sicu_count</div>
-<div><strong>Number of infected people admitted to ICU: </strong>@icu_count</div>
+    <div><strong>Number of people: </strong>@count</div>
+    <div><strong>Number of people admitted to Regular Ward: </strong>@regular_count</div>
+    <div><strong>Number of people admitted to Semi-ICU: </strong>@sicu_count</div>
+    <div><strong>Number of people admitted to ICU: </strong>@icu_count</div>
 
-</div>
-"""
+    </div>
+    """
 
 hover2 = """
-<div>
+    <div>
 
-<div><strong>Age: </strong>@Age</div>
+    <div><strong>Age: </strong>@Age</div>
 
-</div>
-"""
+    </div>
+    """
 
 TOOLS = "pan,box_select,wheel_zoom,save,reset"
 
@@ -168,15 +176,17 @@ p1Source = ColumnDataSource(data = dict(count = [], age_unique = [], regular_cou
 p1 = figure(plot_width=800,
     plot_height=600,
     title = "Number of positive cases per age",
-    x_axis_label = "Number of positive corona cases",
-    y_axis_label = "Age of the patient",
+    x_axis_label = "Age of the patient",
+    y_axis_label = "Number of positive corona cases",
     tools = TOOLS,
     tooltips = hover)
 
 color = []
 color.append('blue')
+
 for i in range(1,20):
     color.append(None)
+
 p1.vbar(
     x = 'age_unique',
     top = 'count',
@@ -189,7 +199,7 @@ p1.vbar(
 
 p1.xaxis.ticker = list(range(0, 20))
 
-tab1 = Panel(child=p1, title="Plot 1")
+tab1 = Panel(child=p1, title="Age Distribution")
 
 
 p2Source = ColumnDataSource()
@@ -198,7 +208,7 @@ p2 = figure(plot_width = 800,
     plot_height = 600,
     title = 'Admission Rate by Age',
     x_range = p1.x_range,
-    y_range = p1.y_range,
+    y_range = (0, 50),
     y_axis_label = 'Percentage of Admissions',
     x_axis_label = 'Age of the Patient',
     tools = TOOLS,
@@ -217,12 +227,24 @@ p2.vbar(x=dodge('Age',  0.25), top='ICU', width=0.2, source=p2Source,
 
 p2.xaxis.ticker = list(range(0, 20))
 
-tab2 = Panel(child = p2, title = "Plot 2")
+tab2 = Panel(child = p2, title = "Admission Rate")
+
+def calcTitle():
+
+    t = Title()
+
+    if(patientType.value == 'Positive'):
+        t.text = 'Number of Positive Cases by Age'
+    elif(patientType.value == 'Negative'):
+        t.text = 'Number of Negative Cases by Age'
+    else:
+        t.text = 'All Patients by Age'
+
+    return t
 
 def update():
     p1SourceList = countCases()
    
-
     p1Source.data = dict(
         count = p1SourceList[0],
         age_unique = p1SourceList[1],
@@ -232,18 +254,20 @@ def update():
         color = p1SourceList[5]
     )
 
+    p1.title = calcTitle()
+
     p2Source.data = calcDFICU()
 
     pass
 
-controls = [range_slider, patient_select, covid_input, multi_choice, select]
+controls = [patientType, range_slider, multi_choice, selectColor]
 
 for control in controls:
     control.on_change('value', lambda attr, old, new: update())
     
 
 
-layout = column(range_slider, patient_select, covid_input, pre2, multi_choice, pre3, file_input, select)
+layout = column(pre, patientType, range_slider, pre2, multi_choice, pre3, file_input, selectColor)
 grid = gridplot([[layout, Tabs(tabs=[tab1, tab2])]])
 
 update()  # initial load of the data
