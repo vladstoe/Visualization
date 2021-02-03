@@ -210,7 +210,7 @@ hover3 = """
     </div>
     """
 
-TOOLS = "pan,box_select,wheel_zoom,save,reset"
+TOOLS = "pan,box_select,tap,wheel_zoom,save,reset"
 
 #Plots
 p1Source = ColumnDataSource(data = dict(count = [], age_unique = [], regular_count = [], sicu_count = [], icu_count = [], color = [], normalizedCount = [], selectedPeople = [], allPeople = [], selection = []))
@@ -230,7 +230,7 @@ color.append('blue')
 for i in range(1,20):
     color.append(None)
 
-p1.vbar(
+p1.vbar(    
     x = 'age_unique',
     top = 'count',
     bottom = 0,
