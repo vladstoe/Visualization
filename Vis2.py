@@ -213,7 +213,7 @@ hover3 = """
 TOOLS = "pan,box_select,wheel_zoom,save,reset"
 
 #Plots
-p1Source = ColumnDataSource(data = dict(count = [], age_unique = [], regular_count = [], sicu_count = [], icu_count = [], color = []))
+p1Source = ColumnDataSource(data = dict(count = [], age_unique = [], regular_count = [], sicu_count = [], icu_count = [], color = [], normalizedCount = [], selectedPeople = [], allPeople = [], selection = []))
 
 p1 = figure(plot_width=800,
     plot_height=600,
@@ -244,10 +244,11 @@ p1.xaxis.ticker = list(range(0, 20))
 
 tab1 = Panel(child=p1, title="Patient Distribution")
 
-p2Source = ColumnDataSource(data = dict(age_unique = [], normalizedCount = [], selectedPeople = [], allPeople = [], selection = [], color = []))
+
 
 p2 = figure(plot_width=800,
     plot_height=600,
+    x_range = p1.x_range,
     title = "Normalized Cases by Age",
     x_axis_label = "Age",
     y_axis_label = "Percentage of People",
@@ -262,7 +263,7 @@ p2.vbar(
     width = 0.5,
     color = 'color',
     fill_alpha = 0.7,
-    source = p2Source
+    source = p1Source
 )
 
 p2.xaxis.ticker = list(range(0, 20))
@@ -327,17 +328,13 @@ def update():
         regular_count = p1SourceList[2],
         sicu_count = p1SourceList[3],
         icu_count = p1SourceList[4],
-        color = p1SourceList[5]
-    )
-
-    p2Source.data = dict(
-        age_unique = p1SourceList[1],
         color = p1SourceList[5],
         normalizedCount = p1SourceList[7],
         selectedPeople = p1SourceList[8], 
         allPeople = p1SourceList[9],
         selection = p1SourceList[10]
     )
+
 
     source.data = dict(x = x, y = y, text = p1SourceList[6])
 
