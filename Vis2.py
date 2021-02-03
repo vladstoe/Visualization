@@ -8,6 +8,7 @@ from bokeh.models import ColumnDataSource, Slider, RangeSlider, CustomJS, TextIn
 from bokeh.plotting import figure
 from bokeh.transform import dodge
 from bokeh.models.tools import HoverTool
+from sklearn.decomposition import PCA
 
 
 df =  pd.read_excel('dataset.xlsx')
@@ -22,14 +23,11 @@ patient.sort()
 
 MIN_AGE = 0
 MAX_AGE = 19
-k = 0
 
 covid_pos = df[df['SARS-Cov-2 exam result'] == 'positive']
 covid_pos_list = covid_pos['SARS-Cov-2 exam result'].count()
 
 viruses = ['Respiratory Syncytial Virus', 'Influenza A', 'Influenza B', 'Parainfluenza 1', 'Rhinovirus/Enterovirus', 'Adenovirus']
-
-
 
 def calcDFICU():
     ageStart = range_slider.value[0]
@@ -160,10 +158,13 @@ def normalizedCases():
         selectedPeople.append(x.shape[0])
         allPeople.append((temp[temp['Patient age quantile'] == l]).shape[0])
         
-        normalizedCount.append(round((selectedPeople[l] / allPeople[l] * 100), 1))
+        if(allPeople[l] == 0):
+            normalizedCount.append(0)
+        else:
+            normalizedCount.append(round((selectedPeople[l] / allPeople[l] * 100), 1))
+
     
     return [normalizedCount, selectedPeople, allPeople, value]
-
 
 
 #Making widgets
