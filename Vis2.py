@@ -108,10 +108,16 @@ def countCases():
 
     for i in range(1,20):
         color.append(None)
+
     count = []
     regular_count = []
     sicu_count = []
     icu_count = []
+    normalizedCount = []
+    selectedPeople = []
+    allPeople = []
+    testResult = []
+
 
     for l in range(0,20):
 
@@ -120,11 +126,22 @@ def countCases():
         sicu = x['Patient addmited to semi-intensive unit (1=yes, 0=no)'].to_list()
         icu = x['Patient addmited to intensive care unit (1=yes, 0=no)'].to_list()
 
+        testResult.append(patientType.value)
+
         k1 = 0
         k2 = 0
         k3 = 0
 
         count.append(x.shape[0])
+
+        selectedPeople.append(x.shape[0])
+        allPeople.append((temp[temp['Patient age quantile'] == l]).shape[0])
+
+        if(allPeople[l] == 0):
+            normalizedCount.append(0)
+        else:
+            normalizedCount.append(round((selectedPeople[l] / allPeople[l] * 100), 1))
+        
 
         for i in regular:
             if i == int('1'):
@@ -142,43 +159,7 @@ def countCases():
         icu_count.append(k3)
 
     
-    return [count, age_unique, regular_count, sicu_count, icu_count, color, text]
-
-
-def normalizedCases():
-    ageStart = range_slider.value[0]
-    ageEnd = range_slider.value[1]
-
-    temp = df[(df['Patient age quantile'] >= ageStart) & 
-        (df['Patient age quantile'] <= ageEnd)]
-
-    if(patientType.value == 'Positive'):
-        selected = temp[temp['SARS-Cov-2 exam result'] == 'positive']
-    elif(patientType.value == 'Negative'):
-        selected = temp[temp['SARS-Cov-2 exam result'] == 'negative']
-    else:
-        selected = temp
-
-    normalizedCount = []
-    selectedPeople = []
-    allPeople = []
-    value = []
-
-    for i in range(0,20):
-        value.append(patientType.value)
-
-    for l in range(0,20):
-        x = selected[selected['Patient age quantile'] == l].copy()
-
-        selectedPeople.append(x.shape[0])
-        allPeople.append((temp[temp['Patient age quantile'] == l]).shape[0])
-        if(allPeople[l] == 0):
-            normalizedCount.append(0)
-        else:
-            normalizedCount.append(round((selectedPeople[l] / allPeople[l] * 100), 1))
-    
-    return [normalizedCount, selectedPeople, allPeople, value]
-
+    return [count, age_unique, regular_count, sicu_count, icu_count, color, text, normalizedCount, selectedPeople, allPeople, testResult]
 
 
 #Making widgets
@@ -236,7 +217,7 @@ p1Source = ColumnDataSource(data = dict(count = [], age_unique = [], regular_cou
 
 p1 = figure(plot_width=800,
     plot_height=600,
-    title = "Number of Positive Cases by Age",
+    title = "Number of Cases by Age",
     x_axis_label = "Age",
     y_axis_label = "Number of Positive Corona Cases",
     tools = TOOLS,
@@ -336,22 +317,9 @@ plot.add_layout(xaxis, 'below')
 yaxis = LinearAxis()
 plot.add_layout(yaxis, 'left')
 
-def calcTitle():
-
-    t = Title()
-
-    if(patientType.value == 'Positive'):
-        t.text = 'Number of Positive Cases by Age'
-    elif(patientType.value == 'Negative'):
-        t.text = 'Number of Negative Cases by Age'
-    else:
-        t.text = 'All Patients by Age'
-
-    return t
 
 def update():
     p1SourceList = countCases()
-    p2SourceList = normalizedCases()
    
     p1Source.data = dict(
         count = p1SourceList[0],
@@ -365,13 +333,12 @@ def update():
     p2Source.data = dict(
         age_unique = p1SourceList[1],
         color = p1SourceList[5],
-        normalizedCount = p2SourceList[0],
-        selectedPeople = p2SourceList[1], 
-        allPeople = p2SourceList[2],
-        selection = p2SourceList[3]
+        normalizedCount = p1SourceList[7],
+        selectedPeople = p1SourceList[8], 
+        allPeople = p1SourceList[9],
+        selection = p1SourceList[10]
     )
 
-    p1.title = calcTitle()
     source.data = dict(x = x, y = y, text = p1SourceList[6])
 
     p3Source.data = calcDFICU()
