@@ -98,8 +98,7 @@ def countCases():
     color = []
     color.append(selectColor.value)
 
-    for i in range(1,20):
-        color.append(None)
+
     
     text = []
 
@@ -108,6 +107,9 @@ def countCases():
 
     for i in range(1,20):
         color.append(None)
+    
+    for i in range(1,9):
+        text.append(None)
 
     count = []
     regular_count = []
@@ -175,6 +177,7 @@ selectColor = Select(title="Choose the color of the plot:", value="blue", option
 pre = PreText(text="""Covid-19 Status:""", width=500, height=10)
 pre2 = PreText(text="""Choose other viruses:""", width=500, height=10)
 pre3 = PreText(text="""Upload file:""", width=500, height=10)
+pre4 = PreText(text="""Text field which shows the covid status of the selected patient:""", width=500, height=10)
 
 file_input = FileInput()
 
@@ -302,22 +305,17 @@ x = np.linspace(-2, 2, N)
 y = x**2
 a = "test"
 text = [a for i in range(1)]
-
+for i in range(1,9):
+    text.append(None)
 source = ColumnDataSource(dict(x=x, y=y, text=text))
 
 plot = Plot(
-    title=None, plot_width=600, plot_height=300,
+    title=None, plot_width=500, plot_height=600,
     min_border=0, toolbar_location=None)
-
+    
 glyph = Text(x="x", y="y", text="text", angle=0.0, text_color="black")
 plot.add_glyph(source, glyph)
-
-xaxis = LinearAxis()
-plot.add_layout(xaxis, 'below')
-
-yaxis = LinearAxis()
-plot.add_layout(yaxis, 'left')
-
+plot.outline_line_color = None
 
 def update():
     p1SourceList = countCases()
@@ -348,10 +346,10 @@ for control in controls:
     
 
 
-layout = column(pre, patientType, range_slider, patient_select, pre2, multi_choice, pre3, file_input, selectColor, plot)
+layout = column(pre, patientType, range_slider, patient_select, selectColor, pre4, plot)
 grid = gridplot([[layout, Tabs(tabs=[tab1, tab2, tab3])]])
 
-update()  # initial load of the data
+update()  # initial load of the data    
 
 curdoc().add_root(grid)
 curdoc().title = "COVID-19 Data Visualizations"
