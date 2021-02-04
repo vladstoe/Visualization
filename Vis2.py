@@ -10,6 +10,8 @@ from bokeh.transform import dodge
 from bokeh.models.tools import HoverTool
 from bokeh.models.plots import Plot
 from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+import matplotlib as mpl
 
 df =  pd.read_excel('dataset.xlsx')
 
@@ -163,6 +165,56 @@ def countCases():
     
     return [count, age_unique, regular_count, sicu_count, icu_count, color, text, normalizedCount, selectedPeople, allPeople, testResult]
 
+def calcPCA(fig):
+    selected = df[df.columns[3:20]]
+    #selected['Patient ID'] = df[['Patient ID']]
+    selected.dropna(inplace=True)
+    selected.reset_index(inplace=True)
+        
+    selected['Patient addmited to regular ward (1=yes, 0=no)'].replace(0, 'No', inplace=True)
+    selected['Patient addmited to regular ward (1=yes, 0=no)'].replace(1, 'Yes', inplace=True)
+
+    selected['Patient addmited to semi-intensive unit (1=yes, 0=no)'].replace(0, 'No', inplace=True)
+    selected['Patient addmited to semi-intensive unit (1=yes, 0=no)'].replace(1, 'Yes', inplace=True)
+
+    selected['Patient addmited to intensive care unit (1=yes, 0=no)'].replace(0, 'No', inplace=True)
+    selected['Patient addmited to intensive care unit (1=yes, 0=no)'].replace(1, 'Yes', inplace=True)
+
+    features = selected[selected.columns[4:18]]
+
+    features = StandardScaler().fit_transform(features)
+    pcaFeatures = PCA(n_components = 2)
+    pcaCovid = pcaFeatures.fit_transform(features)
+
+    dfCovidPca = pd.DataFrame(data = pcaCovid, columns = ['Principal Component 1', 'Principal Component 2'])
+
+    targets = ['No', 'Yes']
+
+    target_colors = {
+        'Yes': '#1FCC00',
+        'No': '#FF0000'
+    }
+
+    for target in targets:
+
+        index = ((selected['Patient addmited to regular ward (1=yes, 0=no)'] == target) | 
+            (selected['Patient addmited to semi-intensive unit (1=yes, 0=no)'] == target) |
+            (selected['Patient addmited to intensive care unit (1=yes, 0=no)'] == target))
+
+
+        fig.circle(dfCovidPca.loc[index, 'Principal Component 1'], 
+            dfCovidPca.loc[index, 'Principal Component 2'], 
+            color = mpl.colors.rgb2hex(target_colors[target]),
+            alpha = 0.9,
+            line_color = 'black',
+            line_width = 0.5,
+            size = 7,
+            legend_label = target
+        ) 
+        
+    return fig
+
+    
 
 #Making widgets
 range_slider = RangeSlider(start = MIN_AGE, end = MAX_AGE, value = (MIN_AGE, MAX_AGE), step = 1, title = "Age")
@@ -177,7 +229,7 @@ selectColor = Select(title="Choose the color of the plot:", value="blue", option
 pre = PreText(text="""Covid-19 Status:""", width=500, height=10)
 pre2 = PreText(text="""Choose other viruses:""", width=500, height=10)
 pre3 = PreText(text="""Upload file:""", width=500, height=10)
-pre4 = PreText(text="""Text field which shows the covid status of the selected patient:""", width=500, height=10)
+pre4 = PreText(text="""COVID-19 test result of the selected patient:""", width=500, height=10)
 
 file_input = FileInput()
 
@@ -222,7 +274,7 @@ p1 = figure(plot_width=800,
     plot_height=600,
     title = "Number of Cases by Age",
     x_axis_label = "Age",
-    y_axis_label = "Number of Positive Corona Cases",
+    y_axis_label = "Number of Cases",
     tools = TOOLS,
     tooltips = hover
 )
@@ -300,6 +352,15 @@ p3.xaxis.ticker = list(range(0, 20))
 
 tab3 = Panel(child = p3, title = "Admission Rate")
 
+
+fig1 = figure(plot_width = 600,
+    plot_height = 600,
+    x_axis_label = "Principal Component 1",
+    y_axis_label = "Principal Component 2"
+)
+
+tab4 = Panel(child = calcPCA(fig1), title = "PCA for Admission")
+
 N = 9
 x = np.linspace(-2, 2, N)
 y = x**2
@@ -347,7 +408,7 @@ for control in controls:
 
 
 layout = column(pre, patientType, range_slider, patient_select, selectColor, pre4, plot)
-grid = gridplot([[layout, Tabs(tabs=[tab1, tab2, tab3])]])
+grid = gridplot([[layout, Tabs(tabs=[tab1, tab2, tab3, tab4])]])
 
 update()  # initial load of the data    
 
