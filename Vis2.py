@@ -408,7 +408,7 @@ for control in controls:
     
 
 
-layout = column(pre, patientType, range_slider, patient_select, selectColor, pre4, plot)
+layout = column(pre, patientType, range_slider, selectColor, patient_select, pre4, plot)
 grid = gridplot([[layout, Tabs(tabs=[tab1, tab2, tab3, tab4])]])
 
 update()  # initial load of the data    
