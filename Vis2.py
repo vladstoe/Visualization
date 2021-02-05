@@ -173,9 +173,14 @@ def calcPCA(fig):
 
     for target in targets:
 
-        index = ((selected['Patient addmited to regular ward (1=yes, 0=no)'] == target) | 
-            (selected['Patient addmited to semi-intensive unit (1=yes, 0=no)'] == target) |
-            (selected['Patient addmited to intensive care unit (1=yes, 0=no)'] == target))
+        if(target == 'Yes'):
+            index = ((selected['Patient addmited to regular ward (1=yes, 0=no)'] == target) | 
+                (selected['Patient addmited to semi-intensive unit (1=yes, 0=no)'] == target) |
+                (selected['Patient addmited to intensive care unit (1=yes, 0=no)'] == target))
+        else:
+            index = ((selected['Patient addmited to regular ward (1=yes, 0=no)'] == target) & 
+                (selected['Patient addmited to semi-intensive unit (1=yes, 0=no)'] == target) &
+                (selected['Patient addmited to intensive care unit (1=yes, 0=no)'] == target))
 
 
         fig.circle(dfCovidPca.loc[index, 'Principal Component 1'], 
