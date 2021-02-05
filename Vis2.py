@@ -357,7 +357,7 @@ fig1 = figure(plot_width = 600,
     plot_height = 600,
     x_axis_label = "Principal Component 1",
     y_axis_label = "Principal Component 2",
-    title = "PCA Analyis for Hospital Admission Based on Blood Test Results"
+    title = "PCA for Hospital Admission Based on Blood Test Results"
 )
 
 tab4 = Panel(child = calcPCA(fig1), title = "PCA for Admission")
