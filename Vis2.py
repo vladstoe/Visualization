@@ -3,7 +3,7 @@ from numpy.lib.utils import source
 import pandas as pd
 from bokeh.io import curdoc
 from bokeh.layouts import column, gridplot
-from bokeh.models import ColumnDataSource, RangeSlider, PreText, MultiChoice, FileInput, Panel, Tabs, Select, Text
+from bokeh.models import ColumnDataSource, RangeSlider, PreText, MultiChoice, Panel, Tabs, Select, Text
 from bokeh.plotting import figure
 from bokeh.transform import dodge
 from bokeh.models.plots import Plot
@@ -13,7 +13,7 @@ import matplotlib as mpl
 
 df =  pd.read_excel('dataset.xlsx')
 
-#Making lists
+#Making lists from the data set
 patient = df['Patient ID'].to_list()
 age_unique = df['Patient age quantile'].unique()
 age_unique = sorted(age_unique)
@@ -22,7 +22,7 @@ covid_pos = df[df['SARS-Cov-2 exam result'] == 'positive']
 MIN_AGE = 0
 MAX_AGE = 19
 
-# Set up data
+# Set up data in order to create the Admission Rate plot
 def calcDFICU():
     ageStart = range_slider.value[0]
     ageEnd = range_slider.value[1]
@@ -139,9 +139,10 @@ def countCases():
                 k3 = k3 + 1
         icu_count.append(k3)
 
-    
+    #returning lists that are part of sources in order to update the plot when using the interaction tools
     return [count, age_unique, regular_count, sicu_count, icu_count, color, text, normalizedCount, selectedPeople, allPeople, testResult]
 
+#Method to create the PCA plot
 def calcPCA(fig):
     selected = df[df.columns[3:20]]
     selected.dropna(inplace=True)
@@ -204,15 +205,11 @@ patient_select = Select(title="Patient", value=patient[0], options=patient)
 colors = ["blue", "red", "green", "black", "yellow", "orange", "purple"]
 selectColor = Select(title="Choose the color of the plot:", value="blue", options=colors)
 
-
 pre = PreText(text="""Covid-19 Status:""", width=500, height=10)
 pre3 = PreText(text="""Upload file:""", width=500, height=10)
 pre4 = PreText(text="""COVID-19 test result of the selected patient:""", width=500, height=10)
 
-file_input = FileInput()
-
-
-# Hover tool for Abstract/Explore (V)
+# Hover tool for plot 1
 hover = """
     <div>
     <div><strong>Number of people: </strong>@count</div>
@@ -222,12 +219,14 @@ hover = """
     </div>
     """
 
+# Hover tool for plot 3
 hover2 = """
     <div>
     <div><strong>Age: </strong>@Age</div>
     </div>
     """
 
+# Hover tool for plot 2
 hover3 = """
     <div>
     <div><strong>Age: </strong>@age_unique</div>
@@ -237,11 +236,13 @@ hover3 = """
     </div>
     """
 
+#The Bokeh tools
 TOOLS = "pan,box_select,tap,wheel_zoom,save,reset"
 
-#Plots
+
 p1Source = ColumnDataSource(data = dict(count = [], age_unique = [], regular_count = [], sicu_count = [], icu_count = [], color = [], normalizedCount = [], selectedPeople = [], allPeople = [], selection = []))
 
+#Plots
 p1 = figure(plot_width=800,
     plot_height=600,
     title = "Number of Cases by Age",
@@ -324,7 +325,7 @@ p3.xaxis.ticker = list(range(0, 20))
 tab3 = Panel(child = p3, title = "Admission Rate")
 
 
-fig1 = figure(plot_width = 600,
+fig1 = figure(plot_width = 800,
     plot_height = 600,
     x_axis_label = "Principal Component 1",
     y_axis_label = "Principal Component 2",
@@ -347,6 +348,7 @@ for i in range(1,9):
 
 source = ColumnDataSource(dict(x=x, y=y, text=text))
 
+#Plot which returns a string, "positive" if the selected patient is covid-19 positive, "negative" otherwise
 plot = Plot(
     title=None, plot_width=500, plot_height=600,
     min_border=0, toolbar_location=None)
@@ -355,7 +357,7 @@ glyph = Text(x="x", y="y", text="text", angle=0.0, text_color="black")
 plot.add_glyph(source, glyph)
 plot.outline_line_color = None
 
-#function to update the plots
+#function to update the plots when using the interaction tools
 def update():
     p1SourceList = countCases()
    
