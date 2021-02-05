@@ -1,13 +1,11 @@
-from bokeh.models.annotations import Legend, Title
 import numpy as np
 from numpy.lib.utils import source
 import pandas as pd
-from bokeh.io import curdoc, show
+from bokeh.io import curdoc
 from bokeh.layouts import column, gridplot
-from bokeh.models import ColumnDataSource, Slider, RangeSlider, CustomJS, TextInput, CheckboxGroup, PreText, Dropdown, MultiChoice, FileInput, Panel, Tabs, Select, Text, LinearAxis
+from bokeh.models import ColumnDataSource, RangeSlider, PreText, MultiChoice, FileInput, Panel, Tabs, Select, Text
 from bokeh.plotting import figure
 from bokeh.transform import dodge
-from bokeh.models.tools import HoverTool
 from bokeh.models.plots import Plot
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
@@ -17,28 +15,14 @@ df =  pd.read_excel('dataset.xlsx')
 
 #Making lists
 patient = df['Patient ID'].to_list()
-age = df['Patient age quantile'].to_list()
-covid = df['SARS-Cov-2 exam result'].to_list()
 age_unique = df['Patient age quantile'].unique()
 age_unique = sorted(age_unique)
+covid_pos = df[df['SARS-Cov-2 exam result'] == 'positive']
 
 MIN_AGE = 0
 MAX_AGE = 19
-k = 0
-counter = 0
 
-covid_pos = df[df['SARS-Cov-2 exam result'] == 'positive']
-covid_pos_list = covid_pos['SARS-Cov-2 exam result'].count()
-
-viruses = ['Respiratory Syncytial Virus', 'Influenza A', 'Influenza B', 'Parainfluenza 1', 'Rhinovirus/Enterovirus', 'Adenovirus']
-
-number = []
-for j in viruses:
-    counter = 0
-    for i in df[df[j] == 'detected']:
-        counter = counter + 1
-    number.append(str(counter))
-
+# Set up data
 def calcDFICU():
     ageStart = range_slider.value[0]
     ageEnd = range_slider.value[1]
@@ -76,11 +60,6 @@ def calcDFICU():
 
     return dfICU
 
-# Set up data
-
-def getDf():
-
-    return df
 
 #Algorithm to count cases
 def countCases():
@@ -100,8 +79,6 @@ def countCases():
     color = []
     color.append(selectColor.value)
 
-
-    
     text = []
 
     n = df['SARS-Cov-2 exam result'][df['Patient ID'] == patient_select.value].to_list()
@@ -167,7 +144,6 @@ def countCases():
 
 def calcPCA(fig):
     selected = df[df.columns[3:20]]
-    #selected['Patient ID'] = df[['Patient ID']]
     selected.dropna(inplace=True)
     selected.reset_index(inplace=True)
         
@@ -214,12 +190,10 @@ def calcPCA(fig):
         
     return fig
 
-    
 
 #Making widgets
 range_slider = RangeSlider(start = MIN_AGE, end = MAX_AGE, value = (MIN_AGE, MAX_AGE), step = 1, title = "Age")
 patientType = Select(value = "Positive", options = ["All", "Positive", "Negative"])
-multi_choice = MultiChoice(value=[], options=viruses)
 patient_select = Select(title="Patient", value=patient[0], options=patient)
 
 colors = ["blue", "red", "green", "black", "yellow", "orange", "purple"]
@@ -227,7 +201,6 @@ selectColor = Select(title="Choose the color of the plot:", value="blue", option
 
 
 pre = PreText(text="""Covid-19 Status:""", width=500, height=10)
-pre2 = PreText(text="""Choose other viruses:""", width=500, height=10)
 pre3 = PreText(text="""Upload file:""", width=500, height=10)
 pre4 = PreText(text="""COVID-19 test result of the selected patient:""", width=500, height=10)
 
@@ -237,31 +210,25 @@ file_input = FileInput()
 # Hover tool for Abstract/Explore (V)
 hover = """
     <div>
-
     <div><strong>Number of people: </strong>@count</div>
     <div><strong>Number of people admitted to Regular Ward: </strong>@regular_count</div>
     <div><strong>Number of people admitted to Semi-ICU: </strong>@sicu_count</div>
     <div><strong>Number of people admitted to ICU: </strong>@icu_count</div>
-
     </div>
     """
 
 hover2 = """
     <div>
-
     <div><strong>Age: </strong>@Age</div>
-
     </div>
     """
 
 hover3 = """
     <div>
-
     <div><strong>Age: </strong>@age_unique</div>
     <div><strong>Percentage of People: </strong>%@normalizedCount{0.0}</div>
     <div><strong>Number of People That Are @selection: </strong>@selectedPeople</div>
     <div><strong>Number of People: </strong>@allPeople</div>
-
     </div>
     """
 
@@ -349,7 +316,6 @@ p3.vbar(x=dodge('Age',  0.25), top='ICU', width=0.2, source=p3Source,
 
 
 p3.xaxis.ticker = list(range(0, 20))
-
 tab3 = Panel(child = p3, title = "Admission Rate")
 
 
@@ -363,13 +329,17 @@ fig1 = figure(plot_width = 600,
 
 tab4 = Panel(child = calcPCA(fig1), title = "PCA for Admission")
 
+
 N = 9
 x = np.linspace(-2, 2, N)
 y = x**2
-a = "test"
+a = None
+
 text = [a for i in range(1)]
+
 for i in range(1,9):
     text.append(None)
+
 source = ColumnDataSource(dict(x=x, y=y, text=text))
 
 plot = Plot(
@@ -380,6 +350,7 @@ glyph = Text(x="x", y="y", text="text", angle=0.0, text_color="black")
 plot.add_glyph(source, glyph)
 plot.outline_line_color = None
 
+#function to update the plots
 def update():
     p1SourceList = countCases()
    
@@ -396,18 +367,16 @@ def update():
         selection = p1SourceList[10]
     )
 
-
     source.data = dict(x = x, y = y, text = p1SourceList[6])
 
     p3Source.data = calcDFICU()
 
 
-controls = [patient_select, patientType, range_slider, multi_choice, selectColor]
+controls = [patient_select, patientType, range_slider, selectColor]
 
 for control in controls:
-    control.on_change('value', lambda attr, old, new: update())
+    control.on_change('value', lambda attr, old, new: update()) #adding functionality to the buttons
     
-
 
 layout = column(pre, patientType, range_slider, selectColor, patient_select, pre4, plot)
 grid = gridplot([[layout, Tabs(tabs=[tab1, tab2, tab3, tab4])]])
@@ -416,6 +385,3 @@ update()  # initial load of the data
 
 curdoc().add_root(grid)
 curdoc().title = "COVID-19 Data Visualizations"
-
-#show(grid)
-#bokeh serve --show Vis2.py
